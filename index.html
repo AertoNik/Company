@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium HQ Dashboard — Корпоративный Портал</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+              950: '#030712',
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons (Premium Icons) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js for corporate analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* Premium scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #4f46e5;
+    }
+    .blur-glass {
+      backdrop-filter: blur(12px);
+      background-color: rgba(15, 23, 42, 0.75);
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans overflow-x-hidden antialiased text-slate-200">
+
+  <!-- TOP HEADER & NAVIGATION -->
+  <header class="sticky top-0 z-40 w-full border-b border-slate-800/80 blur-glass transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand/Company Logo & Name -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <i data-lucide="building-2" class="w-5 h-5 text-white"></i>
+        </div>
+        <div class="flex flex-col">
+          <input type="text" id="company-name-input" value="Apex Corporation" 
+                 class="bg-transparent border-b border-transparent hover:border-slate-700 focus:border-brand-500 focus:outline-none text-lg font-bold text-white transition-all max-w-[180px] sm:max-w-xs"
+                 placeholder="Название компании...">
+          <span class="text-[10px] text-indigo-400 tracking-wider uppercase font-semibold">HQ Панель Управления</span>
+        </div>
+      </div>
+
+      <!-- Cloud Sync & Backup Buttons -->
+      <div class="flex items-center gap-2 sm:gap-4">
+        
+        <!-- Cloud Status -->
+        <div id="cloud-status-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-400">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span id="cloud-status-indicator" class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+          </span>
+          <span id="cloud-status-text" class="hidden sm:inline">Подключение к облаку...</span>
+        </div>
+
+        <!-- Sync Actions -->
+        <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 p-1 rounded-lg">
+          <!-- Export Button -->
+          <button onclick="exportDataToFile()" title="Экспортировать сохранение в файл" 
+                  class="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-all flex items-center gap-1 text-xs">
+            <i data-lucide="download-cloud" class="w-4 h-4"></i>
+            <span class="hidden md:inline">Экспорт</span>
+          </button>
+          
+          <!-- Import Trigger -->
+          <button onclick="triggerImportFile()" title="Импортировать сохранение из файла" 
+                  class="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-all flex items-center gap-1 text-xs">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span class="hidden md:inline">Импорт</span>
+          </button>
+          <input type="file" id="import-file-selector" class="hidden" accept=".json" onchange="importDataFromFile(event)">
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE TAB NAVIGATION (VISIBLE ONLY ON MOBILE) -->
+  <div class="sm:hidden sticky top-16 z-30 w-full bg-slate-950 border-b border-slate-800/80 flex justify-around p-1">
+    <button onclick="switchMobileTab('stats')" id="tab-btn-stats" class="mobile-tab-btn active flex-1 py-3 text-xs font-medium text-center text-indigo-400 border-b-2 border-indigo-500 flex flex-col items-center gap-1">
+      <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Статистика
+    </button>
+    <button onclick="switchMobileTab('employees')" id="tab-btn-employees" class="mobile-tab-btn flex-1 py-3 text-xs font-medium text-center text-slate-400 flex flex-col items-center gap-1">
+      <i data-lucide="users" class="w-4 h-4"></i> Персонал
+    </button>
+    <button onclick="switchMobileTab('projects')" id="tab-btn-projects" class="mobile-tab-btn flex-1 py-3 text-xs font-medium text-center text-slate-400 flex flex-col items-center gap-1">
+      <i data-lucide="briefcase" class="w-4 h-4"></i> Проекты
+    </button>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+    
+    <!-- STATS CARD GRID -->
+    <section id="section-stats-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      
+      <!-- Capital -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-slate-700/80 transition-all shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Капитал</span>
+          <i data-lucide="wallet" class="w-5 h-5 text-indigo-400"></i>
+        </div>
+        <div>
+          <div class="flex items-baseline gap-1">
+            <input type="number" id="stat-capital" value="10000000" onchange="updateFinanceField('capital', this.value)"
+                   class="bg-transparent text-2xl font-bold text-white focus:outline-none focus:border-b focus:border-indigo-500 w-full">
+            <span class="text-slate-400 font-bold">₽</span>
+          </div>
+          <p class="text-slate-500 text-[11px] mt-1">Оборотные средства компании</p>
+        </div>
+      </div>
+
+      <!-- Lifetime Investments -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-slate-700/80 transition-all shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Вложения (Всего)</span>
+          <i data-lucide="trending-up" class="w-5 h-5 text-emerald-400"></i>
+        </div>
+        <div>
+          <div class="flex items-baseline gap-1">
+            <input type="number" id="stat-investments" value="5000000" onchange="updateFinanceField('totalInvestments', this.value)"
+                   class="bg-transparent text-2xl font-bold text-white focus:outline-none focus:border-b focus:border-indigo-500 w-full">
+            <span class="text-slate-400 font-bold">₽</span>
+          </div>
+          <p class="text-slate-500 text-[11px] mt-1">Инвестировано за всё время</p>
+        </div>
+      </div>
+
+      <!-- Lifetime Income -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-slate-700/80 transition-all shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Доход (Всего)</span>
+          <i data-lucide="award" class="w-5 h-5 text-amber-400"></i>
+        </div>
+        <div>
+          <div class="flex items-baseline gap-1">
+            <input type="number" id="stat-lifetime-income" value="15000000" onchange="updateFinanceField('totalLifetimeIncome', this.value)"
+                   class="bg-transparent text-2xl font-bold text-white focus:outline-none focus:border-b focus:border-indigo-500 w-full">
+            <span class="text-slate-400 font-bold">₽</span>
+          </div>
+          <p class="text-slate-500 text-[11px] mt-1">Общие поступления за историю</p>
+        </div>
+      </div>
+
+      <!-- Monthly Income -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-slate-700/80 transition-all shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Месячный Доход</span>
+          <i data-lucide="arrow-up-right" class="w-5 h-5 text-emerald-400"></i>
+        </div>
+        <div>
+          <div class="flex items-baseline gap-1">
+            <input type="number" id="stat-monthly-income" value="1200000" onchange="updateFinanceField('monthlyIncome', this.value)"
+                   class="bg-transparent text-2xl font-bold text-white focus:outline-none focus:border-b focus:border-indigo-500 w-full">
+            <span class="text-slate-400 font-bold">₽</span>
+          </div>
+          <p class="text-slate-500 text-[11px] mt-1">Текущий прогнозируемый приток</p>
+        </div>
+      </div>
+
+      <!-- Monthly Expenses -->
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 hover:border-slate-700/80 transition-all shadow-lg flex flex-col justify-between">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs font-semibold uppercase tracking-wider">Расходы (Месяц)</span>
+          <i data-lucide="arrow-down-left" class="w-5 h-5 text-rose-400"></i>
+        </div>
+        <div>
+          <div class="flex items-baseline gap-1">
+            <input type="number" id="stat-monthly-expenses" value="450000" onchange="updateFinanceField('monthlyExpenses', this.value)"
+                   class="bg-transparent text-2xl font-bold text-white focus:outline-none focus:border-b focus:border-indigo-500 w-full">
+            <span class="text-slate-400 font-bold">₽</span>
+          </div>
+          <p class="text-slate-500 text-[11px] mt-1">Фонд оплаты и хостинг</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- WORKSPACE SKELETON (GRID SYSTEM) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- LEFT MODULE: EMPLOYEES LIST (Desktop: 4 cols) -->
+      <section id="module-employees-list" class="lg:col-span-4 bg-slate-900/50 border border-slate-800 rounded-2xl p-4 sm:p-6 space-y-4">
+        
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="users-round" class="w-5 h-5 text-indigo-400"></i>
+            <h2 class="text-base font-bold text-white">Штат Сотрудников</h2>
+          </div>
+          <span id="employee-count-badge" class="px-2.5 py-0.5 rounded-full bg-slate-800 text-xs font-medium text-slate-400 border border-slate-700">0</span>
+        </div>
+
+        <!-- Search & Add Actions -->
+        <div class="flex flex-col gap-2">
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+            <input type="text" id="employee-search" oninput="filterEmployees()" 
+                   placeholder="Поиск по имени или роли..." 
+                   class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-brand-500 rounded-xl py-2 pl-9 pr-4 text-xs focus:outline-none text-slate-200 placeholder:text-slate-500">
+          </div>
+          <button onclick="openAddEmployeeModal()" 
+                  class="w-full py-2 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-violet-600 hover:from-brand-500 hover:to-violet-500 font-medium text-xs text-white flex items-center justify-center gap-1.5 shadow-lg shadow-brand-600/10 transition-all">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>Добавить сотрудника</span>
+          </button>
+        </div>
+
+        <!-- Employees Dynamic List -->
+        <div id="employees-container" class="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+          <!-- Dynamic cards injected here -->
+        </div>
+
+      </section>
+
+      <!-- RIGHT MODULE: DETAIL CARD / TABS & CHARTS (Desktop: 8 cols) -->
+      <section id="module-main-details" class="lg:col-span-8 space-y-6">
+        
+        <!-- ACTIVE EMPLOYEE DETAIL VIEWER -->
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 relative overflow-hidden">
+          
+          <div id="no-employee-selected-state" class="hidden flex flex-col items-center justify-center py-16 text-center">
+            <div class="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+              <i data-lucide="user-cog" class="w-8 h-8 text-slate-400"></i>
+            </div>
+            <p class="text-slate-400 font-medium text-sm">Выберите сотрудника из списка для детального анализа и постановки задач.</p>
+          </div>
+
+          <div id="employee-profile-active" class="space-y-6">
+            <!-- Dynamic profile headers -->
+            <div class="flex flex-col sm:flex-row gap-6 items-start justify-between border-b border-slate-800/80 pb-6">
+              
+              <div class="flex items-center gap-5">
+                <div id="active-emp-avatar-container" class="relative">
+                  <!-- Dynamic Avatar Or Initial Placeholder -->
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 id="active-emp-name" class="text-xl font-bold text-white tracking-tight"></h3>
+                    <button onclick="editSelectedEmployee()" class="text-slate-400 hover:text-indigo-400 p-1" title="Редактировать данные">
+                      <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                  <p id="active-emp-role" class="text-xs text-indigo-400 font-semibold tracking-wide uppercase mt-0.5"></p>
+                  <p id="active-emp-desc" class="text-xs text-slate-400 max-w-md mt-2 leading-relaxed"></p>
+                </div>
+              </div>
+
+              <!-- Utility score system widget -->
+              <div class="w-full sm:w-auto bg-slate-950/80 border border-slate-800 rounded-2xl p-4 min-w-[200px]">
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                    <i data-lucide="gauge" class="w-3.5 h-3.5 text-indigo-400"></i> Полезность работника
+                  </span>
+                  <span id="active-emp-utility-val" class="text-xs font-extrabold text-indigo-400">0%</span>
+                </div>
+                <input type="range" id="active-emp-utility-slider" min="0" max="100" value="50" oninput="onUtilitySliderChange(this.value)"
+                       class="w-full accent-indigo-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer">
+                <div class="flex justify-between text-[9px] text-slate-500 mt-1">
+                  <span>Стажер</span>
+                  <span>Лидер</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Tasks Block Assigned to Active Employee -->
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                  <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i> Задачи Сотрудника
+                </h4>
+                <button onclick="openAddTaskModal()" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i> Добавить задачу
+                </button>
+              </div>
+
+              <div id="active-emp-tasks-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- Dynamic tasks elements loaded here -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- COMPANY PROJECTS & ANALYTICS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- PROJECTS PANEL -->
+          <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-4 flex flex-col">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="folder-kanban" class="w-5 h-5 text-indigo-400"></i>
+                <h3 class="text-base font-bold text-white">Проекты Компании</h3>
+              </div>
+              <button onclick="openAddProjectModal()" class="p-1 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 text-xs flex items-center gap-1 font-semibold">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Новый
+              </button>
+            </div>
+
+            <!-- Projects Dynamic Container -->
+            <div id="projects-container" class="space-y-3 max-h-[300px] overflow-y-auto pr-1 flex-1">
+              <!-- Dynamically rendered projects -->
+            </div>
+          </div>
+
+          <!-- ANALYTICS PANEL -->
+          <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div class="flex items-center gap-2">
+              <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-400"></i>
+              <h3 class="text-base font-bold text-white">Аналитика Финансов</h3>
+            </div>
+            
+            <div class="w-full relative h-[250px]">
+              <canvas id="financial-flow-chart"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ADDITIONAL EMPLOYEE UTILITY STATS CHART -->
+        <div class="bg-slate-900/50 border border-slate-800 rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="users" class="w-5 h-5 text-indigo-400"></i>
+              <h3 class="text-base font-bold text-white">Оценка Кадров: Полезность</h3>
+            </div>
+            <p class="text-[11px] text-slate-400">Сравнение KPI штата</p>
+          </div>
+          <div class="w-full relative h-[220px]">
+            <canvas id="utility-radar-chart"></canvas>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- MODAL: ADD EMPLOYEE -->
+  <div id="modal-add-employee" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">Карточка Сотрудника</h3>
+        <button onclick="closeAddEmployeeModal()" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <div class="space-y-3">
+        <input type="hidden" id="emp-form-id">
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Имя и Фамилия</label>
+          <input type="text" id="emp-form-name" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100" placeholder="Александр Смирнов">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Должность (Роль)</label>
+          <input type="text" id="emp-form-role" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100" placeholder="Product Manager">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Описание обязанностей</label>
+          <textarea id="emp-form-desc" rows="3" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100" placeholder="Опишите, чем занимается сотрудник..."></textarea>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Ссылка на фото (опционально)</label>
+          <input type="text" id="emp-form-avatar" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100" placeholder="https://images.unsplash.com/photo-...">
+          <p class="text-[10px] text-slate-500 mt-1">Если оставить пустым, сгенерируется красивый аватар на основе инициалов.</p>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Полезность (%)</label>
+          <input type="number" id="emp-form-utility" min="0" max="100" value="50" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100">
+        </div>
+      </div>
+
+      <div class="flex gap-2 justify-end pt-2">
+        <button onclick="closeAddEmployeeModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs transition-all">Отмена</button>
+        <button onclick="submitEmployeeForm()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-lg shadow-indigo-600/10 transition-all">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD PROJECT -->
+  <div id="modal-add-project" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">Добавить проект компании</h3>
+        <button onclick="closeAddProjectModal()" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Название проекта</label>
+          <input type="text" id="project-form-name" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100" placeholder="Интеграция ИИ">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Статус</label>
+          <select id="project-form-status" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100">
+            <option value="Планирование">Планирование</option>
+            <option value="В разработке" selected>В разработке</option>
+            <option value="Завершен">Завершен</option>
+            <option value="Приостановлен">Приостановлен</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Объём вложений (₽)</label>
+          <input type="number" id="project-form-investment" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100" placeholder="250000">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Полученный доход (₽)</label>
+          <input type="number" id="project-form-revenue" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100" placeholder="0">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Прогресс выполнения (%)</label>
+          <input type="number" id="project-form-progress" min="0" max="100" value="10" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100">
+        </div>
+      </div>
+
+      <div class="flex gap-2 justify-end pt-2">
+        <button onclick="closeAddProjectModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs transition-all">Отмена</button>
+        <button onclick="submitProjectForm()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-lg shadow-indigo-600/10 transition-all">Добавить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD TASK -->
+  <div id="modal-add-task" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">Добавить задачу</h3>
+        <button onclick="closeAddTaskModal()" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Текст задачи</label>
+          <input type="text" id="task-form-title" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100" placeholder="Обновить API бэкенда">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Приоритет</label>
+          <select id="task-form-priority" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100">
+            <option value="Высокий">Высокий</option>
+            <option value="Средний" selected>Средний</option>
+            <option value="Низкий">Низкий</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex gap-2 justify-end pt-2">
+        <button onclick="closeAddTaskModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs transition-all">Отмена</button>
+        <button onclick="submitTaskForm()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs shadow-lg shadow-indigo-600/10 transition-all">Назначить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREMIUM CUSTOM TOAST NOTIFICATIONS CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full"></div>
+
+  <!-- FOOTER -->
+  <footer class="mt-auto border-t border-slate-900 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p>© 2026 Premium HQ. Все права защищены.</p>
+      <div class="flex gap-4">
+        <a href="#" class="hover:text-white transition-colors">Безопасность</a>
+        <a href="#" class="hover:text-white transition-colors">Справка</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODULE FIREBASE & STATE LOGIC -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // CORE APPLICATION STATE
+    let state = {
+      companyName: "Apex Corporation",
+      capital: 15000000,
+      totalInvestments: 8000000,
+      totalLifetimeIncome: 25000000,
+      monthlyIncome: 3500000,
+      monthlyExpenses: 1200000,
+      employees: [
+        {
+          id: "emp-1",
+          name: "Алексей Иванов",
+          role: "Генеральный Директор",
+          description: "Основатель компании, ключевой визионер. Отвечает за общую стратегию развития и работу с ключевыми инвесторами.",
+          avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150",
+          utility: 95
+        },
+        {
+          id: "emp-2",
+          name: "Мария Соколова",
+          role: "Ведущий Дизайнер",
+          description: "Курирует визуальный стиль всех цифровых продуктов бренда. Отвечает за UI/UX дизайн-систему компании.",
+          avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150",
+          utility: 88
+        },
+        {
+          id: "emp-3",
+          name: "Никита Смирнов",
+          role: "Технический Директор",
+          description: "Руководит инфраструктурными решениями и бэкенд разработкой. Ответственен за масштабируемость облачных платформ.",
+          avatar: "",
+          utility: 92
+        }
+      ],
+      tasks: [
+        { id: "task-1", title: "Завершить технический аудит системы", priority: "Высокий", completed: false, empId: "emp-3" },
+        { id: "task-2", title: "Создать новый гайдлайн интерфейсов", priority: "Средний", completed: true, empId: "emp-2" },
+        { id: "task-3", title: "Подготовить квартальную презентацию", priority: "Высокий", completed: false, empId: "emp-1" }
+      ],
+      projects: [
+        { id: "proj-1", name: "Ребрендинг портала", status: "В разработке", investment: 1200000, revenue: 1800000, progress: 65 },
+        { id: "proj-2", name: "Внедрение ИИ-чата", status: "Планирование", investment: 3000000, revenue: 0, progress: 15 },
+        { id: "proj-3", name: "Новая мобильная CRM", status: "Завершен", investment: 4500000, revenue: 9800000, progress: 100 }
+      ],
+      activeEmployeeId: "emp-1"
+    };
+
+    // Firebase Globals
+    let db = null;
+    let auth = null;
+    let currentUser = null;
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'office-hq-dashboard';
+
+    // Global charts reference to allow updates
+    let financialChartInstance = null;
+    let utilityChartInstance = null;
+
+    // Toast manager
+    window.showNotification = function(text, type = "success") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      
+      const colors = {
+        success: "border-emerald-500 text-emerald-400 bg-emerald-950/90",
+        error: "border-rose-500 text-rose-400 bg-rose-950/90",
+        info: "border-indigo-500 text-indigo-400 bg-indigo-950/90",
+        warning: "border-amber-500 text-amber-400 bg-amber-950/90"
+      };
+
+      const icon = {
+        success: "check-circle",
+        error: "alert-octagon",
+        info: "info",
+        warning: "alert-triangle"
+      }[type];
+
+      toast.className = `flex items-center gap-3 p-4 rounded-xl border ${colors[type]} shadow-xl transition-all duration-300 translate-x-5 opacity-0 transform-gpu`;
+      toast.innerHTML = `
+        <i data-lucide="${icon}" class="w-5 h-5 flex-shrink-0"></i>
+        <p class="text-xs font-semibold flex-1 leading-relaxed">${text}</p>
+        <button class="text-slate-400 hover:text-white focus:outline-none flex-shrink-0">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      // Trigger animation
+      setTimeout(() => {
+        toast.classList.remove("translate-x-5", "opacity-0");
+      }, 50);
+
+      const closeToast = () => {
+        toast.classList.add("translate-x-5", "opacity-0");
+        setTimeout(() => toast.remove(), 300);
+      };
+
+      toast.querySelector("button").onclick = closeToast;
+      setTimeout(closeToast, 4000);
+    };
+
+    // Database Status Updates in UI
+    function updateSyncStatus(status) {
+      const indicator = document.getElementById("cloud-status-indicator");
+      const badgeText = document.getElementById("cloud-status-text");
+      
+      if (status === 'connected') {
+        indicator.className = "relative inline-flex rounded-full h-2 w-2 bg-emerald-500";
+        badgeText.textContent = "Синхронизировано";
+        badgeText.className = "hidden sm:inline text-emerald-400 font-medium";
+      } else if (status === 'saving') {
+        indicator.className = "relative inline-flex rounded-full h-2 w-2 bg-amber-500 animate-pulse";
+        badgeText.textContent = "Сохранение...";
+        badgeText.className = "hidden sm:inline text-amber-400 font-medium";
+      } else if (status === 'offline') {
+        indicator.className = "relative inline-flex rounded-full h-2 w-2 bg-slate-600";
+        badgeText.textContent = "Локальный режим";
+        badgeText.className = "hidden sm:inline text-slate-400";
+      } else if (status === 'error') {
+        indicator.className = "relative inline-flex rounded-full h-2 w-2 bg-rose-500";
+        badgeText.textContent = "Ошибка облака";
+        badgeText.className = "hidden sm:inline text-rose-400 font-medium";
+      } else if (status === 'connecting') {
+        indicator.className = "relative inline-flex rounded-full h-2 w-2 bg-amber-400 animate-ping";
+        badgeText.textContent = "Подключение...";
+        badgeText.className = "hidden sm:inline text-amber-400";
+      }
+    }
+
+    // INIT FIREBASE CLOUD STORAGE
+    async function initFirebaseSync() {
+      if (typeof __firebase_config === 'undefined' || !__firebase_config) {
+        console.warn("Firebase configuration was not injected at runtime. Operating in in-memory local fallback mode.");
+        updateSyncStatus('offline');
+        // Load fallback if any existed
+        loadStateFromMemory();
+        renderApp();
+        return;
+      }
+
+      try {
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        updateSyncStatus('connecting');
+
+        // Rule 3 Priority custom token or anonymous login
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            currentUser = user;
+            console.log("Authenticated as user:", user.uid);
+            await loadStateFromFirestore();
+          } else {
+            currentUser = null;
+            updateSyncStatus('offline');
+          }
+        });
+
+      } catch (err) {
+        console.error("Failed to boot Firebase Services:", err);
+        updateSyncStatus('error');
+        loadStateFromMemory();
+        renderApp();
+      }
+    }
+
+    // SAVE STATE TO FIRESTORE
+    let saveTimeout = null;
+    async function saveState() {
+      // Always save to memory storage first to make sure current session is persisted in browser
+      localStorage.setItem(`hq_fallback_state_${appId}`, JSON.stringify(state));
+
+      if (!db || !currentUser) {
+        updateSyncStatus('offline');
+        return;
+      }
+
+      updateSyncStatus('saving');
+
+      // Debounce saving logic (limits writes to Firestore to avoid quota hits)
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        try {
+          // Rule 1 strictly followed
+          const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'dashboardCollection', 'stateDocument');
+          await setDoc(docRef, state, { merge: true });
+          updateSyncStatus('connected');
+        } catch (e) {
+          console.error("Cloud saving failed:", e);
+          updateSyncStatus('error');
+        }
+      }, 1500);
+    }
+
+    // LOAD STATE FROM FIRESTORE
+    async function loadStateFromFirestore() {
+      if (!db || !currentUser) return;
+      try {
+        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'dashboardCollection', 'stateDocument');
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const cloudState = docSnap.data();
+          // Safety schema sync
+          state = { ...state, ...cloudState };
+          console.log("Successfully restored cloud data states.");
+          window.showNotification("База данных успешно загружена из облака", "success");
+        } else {
+          console.log("No remote config found. Initializing with baseline setup.");
+          // Store default template in Firestore immediately
+          await setDoc(docRef, state);
+        }
+        updateSyncStatus('connected');
+        renderApp();
+      } catch (err) {
+        console.error("Error loading remote state:", err);
+        updateSyncStatus('error');
+        loadStateFromMemory();
+        renderApp();
+      }
+    }
+
+    // LOCAL STORAGE FALLBACK LOAD
+    function loadStateFromMemory() {
+      const raw = localStorage.getItem(`hq_fallback_state_${appId}`);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          state = { ...state, ...parsed };
+          window.showNotification("Восстановлен последний локальный сеанс", "info");
+        } catch (err) {
+          console.error("Could not parse offline cache storage:", err);
+        }
+      }
+    }
+
+    // LOCAL FILE SYNC: EXPORT SYSTEM
+    window.exportDataToFile = function() {
+      try {
+        const dataStr = JSON.stringify(state, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        
+        const exportFileDefaultName = `${state.companyName.replace(/[^a-zA-Z0-9А-Яа-я]/g, '_')}_HQ_Backup.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        
+        window.showNotification("Файл сохранения успешно выгружен на устройство", "success");
+      } catch (err) {
+        window.showNotification("Ошибка экспорта файла", "error");
+      }
+    };
+
+    // LOCAL FILE SYNC: TRIGGER FILE CHOICE
+    window.triggerImportFile = function() {
+      document.getElementById("import-file-selector").click();
+    };
+
+    // LOCAL FILE SYNC: IMPORT SYSTEM
+    window.importDataFromFile = function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedObj = JSON.parse(e.target.result);
+          
+          // Verify critical structure elements
+          if (importedObj.companyName && Array.isArray(importedObj.employees) && Array.isArray(importedObj.projects)) {
+            state = { ...state, ...importedObj };
+            window.showNotification("Резервное сохранение успешно импортировано!", "success");
+            saveState();
+            renderApp();
+          } else {
+            window.showNotification("Неверный формат файла. Импорт отклонён.", "error");
+          }
+        } catch (err) {
+          window.showNotification("Файл поврежден или содержит синтаксическую ошибку", "error");
+        }
+      };
+      reader.readAsText(file);
+      // reset file input value
+      event.target.value = '';
+    };
+
+    // HELPER: AVATAR GENERATION WITH INITIALS
+    function getAvatarMarkup(employee) {
+      if (employee.avatar && employee.avatar.trim() !== "") {
+        return `<img src="${employee.avatar}" alt="${employee.name}" class="w-12 h-12 rounded-xl object-cover border border-slate-700/50 flex-shrink-0" onerror="this.src=''; this.onerror=null; this.parentNode.innerHTML=getAvatarPlaceholder('${employee.name}')">`;
+      }
+      return getAvatarPlaceholder(employee.name);
+    }
+
+    function getAvatarPlaceholder(name) {
+      const parts = name.trim().split(" ");
+      const initials = parts.map(p => p[0] || '').join("").substring(0, 2).toUpperCase();
+      const colors = [
+        "from-indigo-500 to-cyan-500",
+        "from-purple-500 to-pink-500",
+        "from-emerald-500 to-teal-500",
+        "from-amber-500 to-orange-500",
+        "from-rose-500 to-red-500",
+      ];
+      // Pick color pseudo-randomly
+      let code = 0;
+      for (let i = 0; i < name.length; i++) code += name.charCodeAt(i);
+      const gradient = colors[code % colors.length];
+
+      return `
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center font-bold text-white text-sm tracking-wider border border-slate-700/30 flex-shrink-0">
+          ${initials || "HQ"}
+        </div>
+      `;
+    }
+
+    // HELPER: GET AVATAR LARGE MARKUP (ACTIVE VIEW)
+    function getLargeAvatarMarkup(employee) {
+      if (employee.avatar && employee.avatar.trim() !== "") {
+        return `
+          <img src="${employee.avatar}" alt="${employee.name}" class="w-20 h-20 rounded-2xl object-cover border-2 border-brand-500 flex-shrink-0 shadow-lg" onerror="this.src=''; this.onerror=null; this.parentNode.innerHTML=getLargeAvatarPlaceholder('${employee.name}')">
+        `;
+      }
+      return getLargeAvatarPlaceholder(employee.name);
+    }
+
+    function getLargeAvatarPlaceholder(name) {
+      const parts = name.trim().split(" ");
+      const initials = parts.map(p => p[0] || '').join("").substring(0, 2).toUpperCase();
+      const colors = [
+        "from-indigo-500 to-cyan-500",
+        "from-purple-500 to-pink-500",
+        "from-emerald-500 to-teal-500",
+        "from-amber-500 to-orange-500",
+        "from-rose-500 to-red-500",
+      ];
+      let code = 0;
+      for (let i = 0; i < name.length; i++) code += name.charCodeAt(i);
+      const gradient = colors[code % colors.length];
+
+      return `
+        <div class="w-20 h-20 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center font-bold text-white text-2xl tracking-wider border-2 border-brand-500/50 flex-shrink-0 shadow-lg">
+          ${initials || "HQ"}
+        </div>
+      `;
+    }
+
+    // TAB MANAGEMENT (FOR MOBILE DEVICES SCREENS)
+    window.switchMobileTab = function(tabName) {
+      const statsCards = document.getElementById("section-stats-cards");
+      const listModule = document.getElementById("module-employees-list");
+      const detailsModule = document.getElementById("module-main-details");
+
+      // Reset Active Tabs styling
+      document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'text-indigo-400', 'border-b-2', 'border-indigo-500');
+        btn.classList.add('text-slate-400');
+      });
+
+      // Update current button
+      const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+      activeBtn.classList.remove('text-slate-400');
+      activeBtn.classList.add('active', 'text-indigo-400', 'border-b-2', 'border-indigo-500');
+
+      if (tabName === 'stats') {
+        statsCards.classList.remove('hidden');
+        listModule.classList.add('hidden');
+        detailsModule.classList.add('hidden');
+      } else if (tabName === 'employees') {
+        statsCards.classList.add('hidden');
+        listModule.classList.remove('hidden');
+        detailsModule.classList.remove('hidden');
+        // Hide projects container subset inside desktop details panel
+        document.getElementById("projects-container").parentElement.classList.add("hidden");
+        document.getElementById("financial-flow-chart").parentElement.parentElement.classList.add("hidden");
+        document.getElementById("employee-profile-active").parentElement.classList.remove("hidden");
+      } else if (tabName === 'projects') {
+        statsCards.classList.add('hidden');
+        listModule.classList.add('hidden');
+        detailsModule.classList.remove('hidden');
+        // Show Projects & analytical widgets
+        document.getElementById("projects-container").parentElement.classList.remove("hidden");
+        document.getElementById("financial-flow-chart").parentElement.parentElement.classList.remove("hidden");
+        document.getElementById("employee-profile-active").parentElement.classList.add("hidden");
+      }
+    };
+
+    // MAKE ADAPTIVE TAB STYLING ON RESIZE
+    window.addEventListener('resize', () => {
+      const width = window.innerWidth;
+      const statsCards = document.getElementById("section-stats-cards");
+      const listModule = document.getElementById("module-employees-list");
+      const detailsModule = document.getElementById("module-main-details");
+
+      if (width >= 1024) { // lg breakpoint
+        statsCards.classList.remove('hidden');
+        listModule.classList.remove('hidden');
+        detailsModule.classList.remove('hidden');
+        document.getElementById("projects-container").parentElement.classList.remove("hidden");
+        document.getElementById("financial-flow-chart").parentElement.parentElement.classList.remove("hidden");
+        document.getElementById("employee-profile-active").parentElement.classList.remove("hidden");
+      }
+    });
+
+    // COMPANY STATS BINDERS
+    window.updateFinanceField = function(key, val) {
+      const parsedVal = parseFloat(val) || 0;
+      state[key] = parsedVal;
+      saveState();
+      updateFinancialSummaryCharts();
+    };
+
+    // EMPLOYEES: FILTER
+    window.filterEmployees = function() {
+      const query = document.getElementById("employee-search").value.toLowerCase();
+      const filtered = state.employees.filter(emp => 
+        emp.name.toLowerCase().includes(query) || 
+        emp.role.toLowerCase().includes(query)
+      );
+      renderEmployeesList(filtered);
+    };
+
+    // EMPLOYEES: RENDER SIDEBAR LIST
+    function renderEmployeesList(listToRender = state.employees) {
+      const container = document.getElementById("employees-container");
+      container.innerHTML = "";
+      
+      document.getElementById("employee-count-badge").textContent = state.employees.length;
+
+      if (listToRender.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-xs text-slate-500">
+            Никого не найдено
+          </div>
+        `;
+        return;
+      }
+
+      listToRender.forEach(emp => {
+        const isActive = emp.id === state.activeEmployeeId;
+        const activeClass = isActive 
+          ? 'bg-indigo-600/20 border-indigo-500/80 hover:bg-indigo-600/25' 
+          : 'bg-slate-950/40 border-slate-800/80 hover:bg-slate-900/40 hover:border-slate-700/60';
+
+        const card = document.createElement("div");
+        card.className = `flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${activeClass}`;
+        card.onclick = () => selectActiveEmployee(emp.id);
+
+        card.innerHTML = `
+          ${getAvatarMarkup(emp)}
+          <div class="flex-1 min-w-0">
+            <h4 class="text-xs font-bold text-white truncate">${emp.name}</h4>
+            <p class="text-[10px] text-indigo-400 truncate mt-0.5">${emp.role}</p>
+            <div class="flex items-center gap-1.5 mt-1">
+              <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                <div class="bg-indigo-500 h-full" style="width: ${emp.utility}%"></div>
+              </div>
+              <span class="text-[9px] text-slate-500 font-bold">${emp.utility}%</span>
+            </div>
+          </div>
+          <button onclick="event.stopPropagation(); deleteEmployee('${emp.id}')" class="text-slate-500 hover:text-rose-400 p-1 transition-colors" title="Уволить">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        `;
+        container.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    // EMPLOYEES: SELECTION
+    function selectActiveEmployee(id) {
+      state.activeEmployeeId = id;
+      renderActiveEmployeeProfile();
+      // Keep lists visually active
+      renderEmployeesList();
+      
+      // Auto-focus active profile on mobile screens
+      if (window.innerWidth < 1024) {
+        const detailsModule = document.getElementById("module-main-details");
+        detailsModule.classList.remove("hidden");
+        document.getElementById("employee-profile-active").parentElement.classList.remove("hidden");
+        document.getElementById("projects-container").parentElement.classList.add("hidden");
+        document.getElementById("financial-flow-chart").parentElement.parentElement.classList.add("hidden");
+      }
+    }
+
+    // EMPLOYEES: RENDER ACTIVE WORKSPACE CARD
+    function renderActiveEmployeeProfile() {
+      const activeEmp = state.employees.find(emp => emp.id === state.activeEmployeeId);
+      const profileWrap = document.getElementById("employee-profile-active");
+      const emptyWrap = document.getElementById("no-employee-selected-state");
+
+      if (!activeEmp) {
+        profileWrap.classList.add("hidden");
+        emptyWrap.classList.remove("hidden");
+        return;
+      }
+
+      profileWrap.classList.remove("hidden");
+      emptyWrap.classList.add("hidden");
+
+      document.getElementById("active-emp-name").textContent = activeEmp.name;
+      document.getElementById("active-emp-role").textContent = activeEmp.role;
+      document.getElementById("active-emp-desc").textContent = activeEmp.description || "Обязанности сотрудника не детализированы.";
+      document.getElementById("active-emp-utility-val").textContent = `${activeEmp.utility}%`;
+      document.getElementById("active-emp-utility-slider").value = activeEmp.utility;
+      
+      document.getElementById("active-emp-avatar-container").innerHTML = getLargeAvatarMarkup(activeEmp);
+
+      // Render assigned tasks
+      renderActiveEmployeeTasks(activeEmp.id);
+      lucide.createIcons();
+    }
+
+    // EMPLOYEES: REALTIME SLIDER KPI VALUE UPDATE
+    window.onUtilitySliderChange = function(val) {
+      const activeEmp = state.employees.find(emp => emp.id === state.activeEmployeeId);
+      if (activeEmp) {
+        activeEmp.utility = parseInt(val);
+        document.getElementById("active-emp-utility-val").textContent = `${val}%`;
+        
+        // Save & redraw elements silently without interrupting user drag
+        saveState();
+        
+        // Debounce updating Employee side-list progress indicators to prevent micro-lag
+        if (window.utilityUpdateTimer) clearTimeout(window.utilityUpdateTimer);
+        window.utilityUpdateTimer = setTimeout(() => {
+          renderEmployeesList();
+          updateUtilityStatsCharts();
+        }, 300);
+      }
+    };
+
+    // EMPLOYEES: ADD / MODIFY DIALOG
+    window.openAddEmployeeModal = function() {
+      // Clear values
+      document.getElementById("emp-form-id").value = "";
+      document.getElementById("emp-form-name").value = "";
+      document.getElementById("emp-form-role").value = "";
+      document.getElementById("emp-form-desc").value = "";
+      document.getElementById("emp-form-avatar").value = "";
+      document.getElementById("emp-form-utility").value = "50";
+      
+      document.getElementById("modal-add-employee").classList.remove("hidden");
+    };
+
+    window.closeAddEmployeeModal = function() {
+      document.getElementById("modal-add-employee").classList.add("hidden");
+    };
+
+    window.editSelectedEmployee = function() {
+      const activeEmp = state.employees.find(emp => emp.id === state.activeEmployeeId);
+      if (!activeEmp) return;
+
+      document.getElementById("emp-form-id").value = activeEmp.id;
+      document.getElementById("emp-form-name").value = activeEmp.name;
+      document.getElementById("emp-form-role").value = activeEmp.role;
+      document.getElementById("emp-form-desc").value = activeEmp.description || "";
+      document.getElementById("emp-form-avatar").value = activeEmp.avatar || "";
+      document.getElementById("emp-form-utility").value = activeEmp.utility;
+
+      document.getElementById("modal-add-employee").classList.remove("hidden");
+    };
+
+    window.submitEmployeeForm = function() {
+      const id = document.getElementById("emp-form-id").value;
+      const name = document.getElementById("emp-form-name").value.trim();
+      const role = document.getElementById("emp-form-role").value.trim();
+      const desc = document.getElementById("emp-form-desc").value.trim();
+      const avatar = document.getElementById("emp-form-avatar").value.trim();
+      const utility = parseInt(document.getElementById("emp-form-utility").value) || 50;
+
+      if (!name || !role) {
+        window.showNotification("Пожалуйста, заполните Имя и Роль сотрудника", "warning");
+        return;
+      }
+
+      if (id) {
+        // Edit Mode
+        const emp = state.employees.find(e => e.id === id);
+        if (emp) {
+          emp.name = name;
+          emp.role = role;
+          emp.description = desc;
+          emp.avatar = avatar;
+          emp.utility = utility;
+          window.showNotification(`Профиль сотрудника ${name} обновлен`, "success");
+        }
+      } else {
+        // Add Mode
+        const newId = `emp-${Date.now()}`;
+        state.employees.push({
+          id: newId,
+          name,
+          role,
+          description: desc,
+          avatar,
+          utility
+        });
+        state.activeEmployeeId = newId; // Auto select new
+        window.showNotification(`Сотрудник ${name} добавлен в команду`, "success");
+      }
+
+      closeAddEmployeeModal();
+      saveState();
+      renderApp();
+    };
+
+    // EMPLOYEES: REMOVE
+    window.deleteEmployee = function(id) {
+      const emp = state.employees.find(e => e.id === id);
+      const name = emp ? emp.name : "сотрудника";
+      
+      // Since alert() or confirm() is forbidden, let's make a beautiful confirmation dialog flow
+      // To keep code elegant, we'll use a dynamic notification and quick modal-less delete with undo
+      // but simpler: we just delete immediately and offer notification feedback
+      state.employees = state.employees.filter(e => e.id !== id);
+      // Clean up orphaned tasks assigned to this employee
+      state.tasks = state.tasks.filter(t => t.empId !== id);
+
+      if (state.activeEmployeeId === id) {
+        state.activeEmployeeId = state.employees[0]?.id || "";
+      }
+
+      window.showNotification(`Сотрудник ${name} уволен из штата`, "warning");
+      saveState();
+      renderApp();
+    };
+
+    // TASKS: RENDER ACTIVE EMP TASKS
+    function renderActiveEmployeeTasks(empId) {
+      const container = document.getElementById("active-emp-tasks-container");
+      container.innerHTML = "";
+
+      const employeeTasks = state.tasks.filter(t => t.empId === empId);
+
+      if (employeeTasks.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-1 md:col-span-2 flex flex-col items-center justify-center p-8 bg-slate-950/40 border border-slate-850 rounded-xl border-dashed">
+            <p class="text-xs text-slate-500">У данного сотрудника пока нет задач</p>
+          </div>
+        `;
+        return;
+      }
+
+      employeeTasks.forEach(task => {
+        const isCompleted = task.completed;
+        const priorityColors = {
+          "Высокий": "text-rose-400 bg-rose-500/10 border-rose-500/20",
+          "Средний": "text-amber-400 bg-amber-500/10 border-amber-500/20",
+          "Низкий": "text-slate-400 bg-slate-500/10 border-slate-500/20"
+        }[task.priority] || "text-slate-400";
+
+        const taskBox = document.createElement("div");
+        taskBox.className = `p-4 rounded-xl border bg-slate-950/60 border-slate-800/80 hover:border-slate-700/60 transition-all flex items-start gap-3 ${isCompleted ? 'opacity-60' : ''}`;
+        
+        taskBox.innerHTML = `
+          <button onclick="toggleTaskCompletion('${task.id}')" class="mt-0.5 text-slate-400 hover:text-indigo-400 focus:outline-none">
+            <i data-lucide="${isCompleted ? 'check-circle-2' : 'circle'}" class="w-4 h-4 ${isCompleted ? 'text-emerald-400 fill-emerald-400/10' : 'text-slate-500'}"></i>
+          </button>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-semibold text-slate-200 ${isCompleted ? 'line-through text-slate-500' : ''}">${task.title}</p>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="text-[9px] px-2 py-0.5 rounded border ${priorityColors} font-semibold">${task.priority}</span>
+              <button onclick="deleteTask('${task.id}')" class="text-[9px] text-slate-500 hover:text-rose-400 font-medium transition-colors">Удалить</button>
+            </div>
+          </div>
+        `;
+        container.appendChild(taskBox);
+      });
+      lucide.createIcons();
+    }
+
+    // TASKS: TOGGLE
+    window.toggleTaskCompletion = function(id) {
+      const task = state.tasks.find(t => t.id === id);
+      if (task) {
+        task.completed = !task.completed;
+        saveState();
+        renderActiveEmployeeTasks(state.activeEmployeeId);
+      }
+    };
+
+    // TASKS: ADD ACTION
+    window.openAddTaskModal = function() {
+      document.getElementById("task-form-title").value = "";
+      document.getElementById("task-form-priority").value = "Средний";
+      document.getElementById("modal-add-task").classList.remove("hidden");
+    };
+
+    window.closeAddTaskModal = function() {
+      document.getElementById("modal-add-task").classList.add("hidden");
+    };
+
+    window.submitTaskForm = function() {
+      const title = document.getElementById("task-form-title").value.trim();
+      const priority = document.getElementById("task-form-priority").value;
+
+      if (!title) {
+        window.showNotification("Введите описание задачи", "warning");
+        return;
+      }
+
+      state.tasks.push({
+        id: `task-${Date.now()}`,
+        title,
+        priority,
+        completed: false,
+        empId: state.activeEmployeeId
+      });
+
+      closeAddTaskModal();
+      window.showNotification("Задача успешно назначена", "success");
+      saveState();
+      renderActiveEmployeeTasks(state.activeEmployeeId);
+    };
+
+    // TASKS: DELETE
+    window.deleteTask = function(id) {
+      state.tasks = state.tasks.filter(t => t.id !== id);
+      window.showNotification("Задача удалена", "info");
+      saveState();
+      renderActiveEmployeeTasks(state.activeEmployeeId);
+    };
+
+    // PROJECTS: RENDER PANEL LIST
+    function renderProjects() {
+      const container = document.getElementById("projects-container");
+      container.innerHTML = "";
+
+      if (state.projects.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-xs text-slate-500">
+            Нет активных проектов. Нажмите "Новый" для добавления.
+          </div>
+        `;
+        return;
+      }
+
+      state.projects.forEach(proj => {
+        const statusColors = {
+          "Планирование": "text-indigo-400 border-indigo-400/20 bg-indigo-500/10",
+          "В разработке": "text-amber-400 border-amber-400/20 bg-amber-500/10",
+          "Завершен": "text-emerald-400 border-emerald-400/20 bg-emerald-500/10",
+          "Приостановлен": "text-rose-400 border-rose-400/20 bg-rose-500/10"
+        }[proj.status] || "text-slate-400";
+
+        // ROI percentage calculation
+        const roi = proj.investment > 0 
+          ? Math.round(((proj.revenue - proj.investment) / proj.investment) * 100) 
+          : 0;
+
+        const roiClass = roi >= 0 ? "text-emerald-400" : "text-rose-400";
+        const roiText = roi >= 0 ? `+${roi}% ROI` : `${roi}% ROI`;
+
+        const card = document.createElement("div");
+        card.className = "bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 space-y-3 hover:border-slate-700/60 transition-all";
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-xs font-bold text-white">${proj.name}</h4>
+              <span class="text-[9px] font-semibold ${roiClass} mt-0.5 inline-block">${roiText}</span>
+            </div>
+            <span class="text-[9px] px-2 py-0.5 rounded-full border ${statusColors} font-semibold">${proj.status}</span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+              <span>Прогресс</span>
+              <span class="font-bold text-indigo-400">${proj.progress}%</span>
+            </div>
+            <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-gradient-to-r from-brand-500 to-indigo-500 h-full" style="width: ${proj.progress}%"></div>
+            </div>
+          </div>
+
+          <!-- Investments / Revenue info -->
+          <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-400 pt-1 border-t border-slate-900">
+            <div>
+              <span class="block text-[8px] text-slate-500 uppercase font-semibold">Вложения</span>
+              <span class="font-bold text-slate-200">${proj.investment.toLocaleString()} ₽</span>
+            </div>
+            <div class="text-right">
+              <span class="block text-[8px] text-slate-500 uppercase font-semibold">Доход</span>
+              <span class="font-bold text-slate-200">${proj.revenue.toLocaleString()} ₽</span>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center justify-end gap-2 pt-2 text-[9px]">
+            <button onclick="editProjectStatus('${proj.id}')" class="text-indigo-400 hover:text-indigo-300 font-semibold">Статус</button>
+            <span class="text-slate-700">•</span>
+            <button onclick="deleteProject('${proj.id}')" class="text-slate-500 hover:text-rose-400">Удалить</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // PROJECTS: ACTION ADD
+    window.openAddProjectModal = function() {
+      document.getElementById("project-form-name").value = "";
+      document.getElementById("project-form-status").value = "В разработке";
+      document.getElementById("project-form-investment").value = "";
+      document.getElementById("project-form-revenue").value = "";
+      document.getElementById("project-form-progress").value = "10";
+      
+      document.getElementById("modal-add-project").classList.remove("hidden");
+    };
+
+    window.closeAddProjectModal = function() {
+      document.getElementById("modal-add-project").classList.add("hidden");
+    };
+
+    window.submitProjectForm = function() {
+      const name = document.getElementById("project-form-name").value.trim();
+      const status = document.getElementById("project-form-status").value;
+      const investment = parseFloat(document.getElementById("project-form-investment").value) || 0;
+      const revenue = parseFloat(document.getElementById("project-form-revenue").value) || 0;
+      const progress = parseInt(document.getElementById("project-form-progress").value) || 0;
+
+      if (!name) {
+        window.showNotification("Введите название проекта", "warning");
+        return;
+      }
+
+      state.projects.push({
+        id: `proj-${Date.now()}`,
+        name,
+        status,
+        investment,
+        revenue,
+        progress
+      });
+
+      closeAddProjectModal();
+      window.showNotification("Новый проект внесен в базу данных", "success");
+      saveState();
+      renderApp();
+    };
+
+    // PROJECTS: QUICK STATUS CHANGE DEMODAL
+    window.editProjectStatus = function(id) {
+      const proj = state.projects.find(p => p.id === id);
+      if (!proj) return;
+
+      const statuses = ["Планирование", "В разработке", "Завершен", "Приостановлен"];
+      const currentIndex = statuses.indexOf(proj.status);
+      const nextIndex = (currentIndex + 1) % statuses.length;
+      
+      proj.status = statuses[nextIndex];
+      if (proj.status === "Завершен") proj.progress = 100;
+      
+      window.showNotification(`Статус проекта "${proj.name}" изменен на: ${proj.status}`, "info");
+      saveState();
+      renderApp();
+    };
+
+    // PROJECTS: REMOVE
+    window.deleteProject = function(id) {
+      state.projects = state.projects.filter(p => p.id !== id);
+      window.showNotification("Проект удален", "info");
+      saveState();
+      renderApp();
+    };
+
+    // ANALYTICS: INITS AND CHARTS UPDATES
+    function updateFinancialSummaryCharts() {
+      const ctx = document.getElementById('financial-flow-chart').getContext('2d');
+      
+      const balance = state.capital;
+      const invest = state.totalInvestments;
+      const rev = state.totalLifetimeIncome;
+      const monthIncome = state.monthlyIncome;
+      const monthExpense = state.monthlyExpenses;
+
+      if (financialChartInstance) {
+        financialChartInstance.destroy();
+      }
+
+      financialChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Капитал', 'Вложения (Всего)', 'Доход (Всего)', 'Мес. Доход', 'Мес. Расход'],
+          datasets: [{
+            label: 'Объём финансов (₽)',
+            data: [balance, invest, rev, monthIncome, monthExpense],
+            backgroundColor: [
+              'rgba(99, 102, 241, 0.45)', // Capital (Indigo)
+              'rgba(16, 185, 129, 0.45)', // Investments (Emerald)
+              'rgba(245, 158, 11, 0.45)',  // Lifetime Revenue (Amber)
+              'rgba(52, 211, 153, 0.35)',  // Monthly Income
+              'rgba(244, 63, 94, 0.35)'    // Monthly Expense
+            ],
+            borderColor: [
+              '#6366f1',
+              '#10b981',
+              '#f59e0b',
+              '#34d399',
+              '#f43f5e'
+            ],
+            borderWidth: 1.5,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#f1f5f9',
+              bodyColor: '#cbd5e1',
+              borderColor: '#334155',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  return ` ${context.parsed.y.toLocaleString()} ₽`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8', font: { size: 9 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8', font: { size: 9 } }
+            }
+          }
+        }
+      });
+    }
+
+    function updateUtilityStatsCharts() {
+      const ctx = document.getElementById('utility-radar-chart').getContext('2d');
+      
+      const names = state.employees.map(e => e.name.split(" ")[0]); // Use first name
+      const utilities = state.employees.map(e => e.utility);
+
+      if (utilityChartInstance) {
+        utilityChartInstance.destroy();
+      }
+
+      utilityChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: names.length ? names : ['Штат пуст'],
+          datasets: [{
+            label: 'Полезность сотрудника (%)',
+            data: utilities.length ? utilities : [0],
+            backgroundColor: 'rgba(99, 102, 241, 0.25)',
+            borderColor: '#6366f1',
+            borderWidth: 2,
+            borderRadius: 6,
+            barThickness: 16
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleColor: '#f1f5f9',
+              bodyColor: '#cbd5e1',
+              borderColor: '#334155',
+              borderWidth: 1
+            }
+          },
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8', font: { size: 9 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8', font: { size: 9 } }
+            }
+          }
+        }
+      });
+    }
+
+    // GLOBAL APP RENDERING ENGINE
+    function renderApp() {
+      // 1. Sync header text inputs
+      document.getElementById("company-name-input").value = state.companyName;
+
+      // 2. Sync Top statistics numbers
+      document.getElementById("stat-capital").value = state.capital;
+      document.getElementById("stat-investments").value = state.totalInvestments;
+      document.getElementById("stat-lifetime-income").value = state.totalLifetimeIncome;
+      document.getElementById("stat-monthly-income").value = state.monthlyIncome;
+      document.getElementById("stat-monthly-expenses").value = state.monthlyExpenses;
+
+      // 3. Render modules
+      renderEmployeesList();
+      renderActiveEmployeeProfile();
+      renderProjects();
+
+      // 4. Update Graphic representations
+      updateFinancialSummaryCharts();
+      updateUtilityStatsCharts();
+    }
+
+    // EVENT LISTENERS
+    document.addEventListener("DOMContentLoaded", () => {
+      // Initialize Lucide icons vector
+      lucide.createIcons();
+
+      // Monitor Company Name edits
+      document.getElementById("company-name-input").addEventListener("change", (e) => {
+        state.companyName = e.target.value.trim() || "Apex Corporation";
+        saveState();
+      });
+
+      // Launch Storage initialization
+      initFirebaseSync();
+    });
+
+  </script>
+</body>
+</html>
