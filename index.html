@@ -403,11 +403,33 @@
           <label class="block text-xs text-slate-400 font-medium mb-1">Описание обязанностей</label>
           <textarea id="emp-form-desc" rows="3" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100" placeholder="Опишите, чем занимается сотрудник..."></textarea>
         </div>
+        
+        <!-- ENHANCED AVATAR SELECTION MODULE (SUPPORTING BOTH UPLOAD AND URL fallback) -->
         <div>
-          <label class="block text-xs text-slate-400 font-medium mb-1">Ссылка на фото (опционально)</label>
-          <input type="text" id="emp-form-avatar" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100" placeholder="https://images.unsplash.com/photo-...">
-          <p class="text-[10px] text-slate-500 mt-1">Если оставить пустым, сгенерируется красивый аватар на основе инициалов.</p>
+          <label class="block text-xs text-slate-400 font-medium mb-1">Фото сотрудника</label>
+          <div class="flex items-center gap-3">
+            <!-- Dynamic Preview Container -->
+            <div id="emp-form-avatar-preview" class="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+              <i data-lucide="user" class="w-5 h-5 text-slate-500"></i>
+            </div>
+            <!-- Upload File Input styled premiumly -->
+            <label class="flex-1 flex flex-col items-center justify-center py-2.5 px-4 rounded-xl border border-dashed border-slate-800 hover:border-indigo-500/50 bg-slate-950 hover:bg-slate-900/40 cursor-pointer transition-all group">
+              <span class="text-xs text-slate-400 group-hover:text-slate-300 font-medium flex items-center gap-1.5">
+                <i data-lucide="upload" class="w-4 h-4 text-slate-400"></i> Загрузить файл с устройства
+              </span>
+              <input type="file" id="emp-form-avatar-file" accept="image/*" class="hidden" onchange="handleModalAvatarUpload(event)">
+            </label>
+          </div>
+          <!-- Hidden storage to carry final base64 string or original link -->
+          <input type="hidden" id="emp-form-avatar-data">
+          
+          <div class="mt-2.5 flex items-center gap-2">
+            <span class="text-[9px] text-slate-500 uppercase tracking-wider font-semibold whitespace-nowrap">Или вставьте ссылку:</span>
+            <input type="text" id="emp-form-avatar" oninput="handleModalAvatarUrlInput(this.value)" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200" placeholder="https://...">
+          </div>
+          <p class="text-[10px] text-slate-500 mt-1 leading-normal">При выборе файла изображение автоматически сожмется до размера 128x128px для оптимальной экономии памяти в облаке.</p>
         </div>
+
         <div>
           <label class="block text-xs text-slate-400 font-medium mb-1">Полезность (%)</label>
           <input type="number" id="emp-form-utility" min="0" max="100" value="50" class="w-full bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-indigo-500 focus:outline-none rounded-xl p-2.5 text-xs text-slate-100">
@@ -1069,10 +1091,14 @@
       document.getElementById("emp-form-name").value = "";
       document.getElementById("emp-form-role").value = "";
       document.getElementById("emp-form-desc").value = "";
+      document.getElementById("emp-form-avatar-data").value = "";
+      document.getElementById("emp-form-avatar-file").value = "";
       document.getElementById("emp-form-avatar").value = "";
+      document.getElementById("emp-form-avatar-preview").innerHTML = `<i data-lucide="user" class="w-5 h-5 text-slate-500"></i>`;
       document.getElementById("emp-form-utility").value = "50";
       
       document.getElementById("modal-add-employee").classList.remove("hidden");
+      lucide.createIcons();
     };
 
     window.closeAddEmployeeModal = function() {
@@ -1087,10 +1113,79 @@
       document.getElementById("emp-form-name").value = activeEmp.name;
       document.getElementById("emp-form-role").value = activeEmp.role;
       document.getElementById("emp-form-desc").value = activeEmp.description || "";
-      document.getElementById("emp-form-avatar").value = activeEmp.avatar || "";
-      document.getElementById("emp-form-utility").value = activeEmp.utility;
+      
+      // Separate base64 uploads from text links
+      const isBase64 = activeEmp.avatar && activeEmp.avatar.startsWith("data:");
+      document.getElementById("emp-form-avatar-data").value = activeEmp.avatar || "";
+      document.getElementById("emp-form-avatar").value = isBase64 ? "" : (activeEmp.avatar || "");
+      document.getElementById("emp-form-avatar-file").value = "";
 
+      if (activeEmp.avatar) {
+        document.getElementById("emp-form-avatar-preview").innerHTML = `<img src="${activeEmp.avatar}" class="w-full h-full object-cover">`;
+      } else {
+        document.getElementById("emp-form-avatar-preview").innerHTML = `<i data-lucide="user" class="w-5 h-5 text-slate-500"></i>`;
+      }
+
+      document.getElementById("emp-form-utility").value = activeEmp.utility;
       document.getElementById("modal-add-employee").classList.remove("hidden");
+      lucide.createIcons();
+    };
+
+    // HANDLER FOR FILE PICKER (COMPRESSES IMAGE TO SAVINGS DURATION)
+    window.handleModalAvatarUpload = function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          // Downscale canvas to max 128x128 to save storage overhead in firebase/localstorage
+          const maxDim = 128;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > maxDim) {
+              height *= maxDim / width;
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width *= maxDim / height;
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Get medium quality jpeg data string
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+          
+          document.getElementById("emp-form-avatar-data").value = compressedDataUrl;
+          document.getElementById("emp-form-avatar").value = ""; // Clear URL field to avoid conflicts
+          
+          // Render immediate live preview inside modal
+          document.getElementById("emp-form-avatar-preview").innerHTML = `<img src="${compressedDataUrl}" class="w-full h-full object-cover">`;
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // HANDLER FOR URL MANUAL INPUT
+    window.handleModalAvatarUrlInput = function(val) {
+      const trimmed = val.trim();
+      document.getElementById("emp-form-avatar-data").value = trimmed;
+      if (trimmed) {
+        document.getElementById("emp-form-avatar-preview").innerHTML = `<img src="${trimmed}" class="w-full h-full object-cover" onerror="this.src=''; this.parentNode.innerHTML='<i data-lucide=\\'image-off\\' class=\\'w-5 h-5 text-rose-500\\'></i>'; lucide.createIcons();">`;
+      } else {
+        document.getElementById("emp-form-avatar-preview").innerHTML = `<i data-lucide="user" class="w-5 h-5 text-slate-500"></i>`;
+      }
+      lucide.createIcons();
     };
 
     window.submitEmployeeForm = function() {
@@ -1098,7 +1193,12 @@
       const name = document.getElementById("emp-form-name").value.trim();
       const role = document.getElementById("emp-form-role").value.trim();
       const desc = document.getElementById("emp-form-desc").value.trim();
-      const avatar = document.getElementById("emp-form-avatar").value.trim();
+      
+      // Collect the pre-compressed Base64 string or the URL from hidden register
+      let avatar = document.getElementById("emp-form-avatar-data").value.trim();
+      if (!avatar) {
+        avatar = document.getElementById("emp-form-avatar").value.trim();
+      }
       const utility = parseInt(document.getElementById("emp-form-utility").value) || 50;
 
       if (!name || !role) {
@@ -1142,9 +1242,6 @@
       const emp = state.employees.find(e => e.id === id);
       const name = emp ? emp.name : "сотрудника";
       
-      // Since alert() or confirm() is forbidden, let's make a beautiful confirmation dialog flow
-      // To keep code elegant, we'll use a dynamic notification and quick modal-less delete with undo
-      // but simpler: we just delete immediately and offer notification feedback
       state.employees = state.employees.filter(e => e.id !== id);
       // Clean up orphaned tasks assigned to this employee
       state.tasks = state.tasks.filter(t => t.empId !== id);
